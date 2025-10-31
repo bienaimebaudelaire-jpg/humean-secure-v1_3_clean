@@ -3,4 +3,4 @@ Param(
   [string]$SigPath    = "attestation/ledger.sshsig",
   [string]$Signers    = "attestation/keys/allowed_signers"
 )
-Get-Content $LedgerPath | ssh-keygen -Y verify -f $Signers -I "humean" -n file -s $SigPath
+cmd /c "type ""$LedgerPath"" | ssh-keygen -Y verify -f ""$Signers"" -I humean -n file -s ""$SigPath"""
