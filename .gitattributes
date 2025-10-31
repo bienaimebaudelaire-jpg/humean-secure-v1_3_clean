@@ -1,0 +1,4 @@
+# Prevent EOL normalization on cryptographic artifacts
+attestation/ledger.log -text
+attestation/ledger.sshsig -text
+attestation/keys/* -text
