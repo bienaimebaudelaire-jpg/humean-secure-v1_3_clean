@@ -1,0 +1,6 @@
+﻿# HUMEAN Ledger
+timestamp: 2025-10-31T22:24:37+01:00
+event: genesis
+author: bienaimebaudelaire-jpg
+policy: policies/policy.jcs.json
+charter: charters/charter_v1_1.json

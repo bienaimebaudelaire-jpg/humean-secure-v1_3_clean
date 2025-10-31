@@ -1,0 +1,11 @@
+﻿{
+    "schema":  "https://humean.org/schemas/charter-v1.1",
+    "name":  "HUMEAN Charter",
+    "version":  "1.1.0",
+    "purpose":  "Align AI and Humanity with verifiable guarantees.",
+    "active_policy":  "policies/policy.jcs.json",
+    "contact":  {
+                    "author":  "bienaimebaudelaire-jpg",
+                    "email":  "bienaimebaudelaire-jpg@users.noreply.github.com"
+                }
+}

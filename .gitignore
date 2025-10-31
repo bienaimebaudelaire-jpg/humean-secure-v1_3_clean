@@ -1,0 +1,4 @@
+﻿attestation/keys/ed25519_humean
+attestation/keys/ed25519_humean.*
+*.pem
+*.key

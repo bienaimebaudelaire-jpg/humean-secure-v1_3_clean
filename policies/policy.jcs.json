@@ -1,0 +1,22 @@
+﻿{
+    "schema":  "https://humean.org/schemas/policy-jcs-v1",
+    "name":  "HUMEAN Base Policy",
+    "version":  "1.0.0",
+    "public_key_type":  "ssh-ed25519",
+    "public_key_openssh":  "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINrjaLewPyTx4XJM4SF1WgsbX6HsaBb8ulnpDXzV35p0 humean-key",
+    "rules":  [
+                  {
+                      "id":  "ledger.append_only",
+                      "enforced":  true
+                  },
+                  {
+                      "id":  "files.manifest.required",
+                      "paths":  [
+                                    "README.md",
+                                    "manifesto/manifesto_v1_0.md",
+                                    "charters/charter_v1_1.json"
+                                ]
+                  }
+              ]
+}
+
