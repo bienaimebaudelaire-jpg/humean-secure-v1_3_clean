@@ -1,0 +1,87 @@
+﻿name: release-on-tag
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # (optionnel) on réécrit les clés depuis les secrets pour signer le manifest
+      - name: Write HUMEAN keys (optional)
+        shell: pwsh
+        env:
+          HUMEAN_PRIVKEY_B64: ${{ secrets.HUMEAN_PRIVKEY_B64 }}
+          HUMEAN_PUBKEY_B64:  ${{ secrets.HUMEAN_PUBKEY_B64 }}
+        run: |
+          if ($env:HUMEAN_PRIVKEY_B64) {
+            New-Item -ItemType Directory -Force -Path "attestation" | Out-Null
+            $priv = [Convert]::FromBase64String($env:HUMEAN_PRIVKEY_B64)
+            [IO.File]::WriteAllBytes("attestation/PRIMARY-KEY-003.priv", $priv)
+          }
+          if ($env:HUMEAN_PUBKEY_B64) {
+            New-Item -ItemType Directory -Force -Path "attestation" | Out-Null
+            $pub = [Convert]::FromBase64String($env:HUMEAN_PUBKEY_B64)
+            [IO.File]::WriteAllBytes("attestation/PRIMARY-KEY-003.pub", $pub)
+          }
+
+      - name: Make attestation pack
+        shell: pwsh
+        run: |
+          pwsh ./ci/make-attestation-pack.ps1
+
+      - name: Find generated zip
+        id: findzip
+        shell: pwsh
+        run: |
+          $zips = Get-ChildItem -Path "out" -Filter "humean-attestation-*.zip" | Sort-Object LastWriteTime -Descending
+          if (-not $zips) {
+            Write-Error "Aucun pack d'attestation généré."
+          }
+          $latest = $zips[0].FullName
+          Write-Host "pack=$latest"
+          "pack=$latest" >> $env:GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: HUMEAN ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+
+      - name: Upload attestation zip to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.findzip.outputs.pack }}
+          asset_name: humean-attestation-${{ github.ref_name }}.zip
+          asset_content_type: application/zip
+
+      # bonus: publier aussi le manifest.json séparément
+      - name: Upload manifest to release (if present)
+        if: exists('out/manifest.json')
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: out/manifest.json
+          asset_name: manifest-${{ github.ref_name }}.json
+          asset_content_type: application/json
