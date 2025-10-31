@@ -18,7 +18,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # (optionnel) on réécrit les clés depuis les secrets pour signer le manifest
       - name: Write HUMEAN keys (optional)
         shell: pwsh
         env:
@@ -50,7 +49,6 @@ jobs:
             Write-Error "Aucun pack d'attestation généré."
           }
           $latest = $zips[0].FullName
-          Write-Host "pack=$latest"
           "pack=$latest" >> $env:GITHUB_OUTPUT
 
       - name: Create GitHub Release
@@ -74,9 +72,8 @@ jobs:
           asset_name: humean-attestation-${{ github.ref_name }}.zip
           asset_content_type: application/zip
 
-      # bonus: publier aussi le manifest.json séparément
       - name: Upload manifest to release (if present)
-        if: exists('out/manifest.json')
+        if: ${{ hashFiles('out/manifest.json') != '' }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
