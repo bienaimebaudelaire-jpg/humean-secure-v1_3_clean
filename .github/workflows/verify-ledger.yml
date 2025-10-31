@@ -1,5 +1,4 @@
 name: Verify ledger signatures
-
 on:
   push:
     branches: [ "main" ]
@@ -19,12 +18,20 @@ jobs:
           uname -a
           ssh -V || true
           ssh-keygen -h | head -n 1 || true
+          ls -la
 
       - name: Defensive EOL normalize (Linux)
+        shell: bash
         run: |
+          set -euo pipefail
           for f in attestation/ledger.log attestation/ledger.sshsig attestation/keys/allowed_signers; do
-            [ -f "" ] || { echo "missing "; exit 1; }
-            sed -i 's/\r$//' "" || true
+            if [ ! -f "$f" ]; then
+              echo "missing $f"
+              ls -la attestation || true
+              ls -la attestation/keys || true
+              exit 1
+            fi
+            sed -i 's/\r$//' "$f" || true
           done
 
       - name: Verify (OpenSSH SSHSig)
