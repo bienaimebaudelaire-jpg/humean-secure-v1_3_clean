@@ -12,21 +12,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup PowerShell
-        uses: PowerShell/PowerShell@v1
-        with:
-          pwsh-version: '7.4.x'
-
       - name: Write attestation pubkey (from secret)
         if: env.HUMEAN_PUBKEY_B64 != ''
         env:
           HUMEAN_PUBKEY_B64: ${{ secrets.HUMEAN_PUBKEY_B64 }}
-        run: |
-          mkdir -p attestation
-          echo "$env:HUMEAN_PUBKEY_B64" | base64 -d > attestation/PRIMARY-KEY-003.pub
         shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "attestation" | Out-Null
+          $bytes = [Convert]::FromBase64String($env:HUMEAN_PUBKEY_B64)
+          [IO.File]::WriteAllBytes("attestation/PRIMARY-KEY-003.pub", $bytes)
+          Write-Host "clé écrite dans attestation/PRIMARY-KEY-003.pub"
 
       - name: Verify ledger
         shell: pwsh
-        run: |
-          ./ci/verify-ledger-ci.ps1
+        run: ./ci/verify-ledger-ci.ps1
