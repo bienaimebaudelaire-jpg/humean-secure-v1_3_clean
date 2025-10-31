@@ -1,0 +1,78 @@
+﻿name: sign-and-verify
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+
+jobs:
+  sign-and-verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Write HUMEAN keys from secrets
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "attestation" | Out-Null
+
+          if ($env:HUMEAN_PRIVKEY_B64) {
+            $privBytes = [Convert]::FromBase64String($env:HUMEAN_PRIVKEY_B64)
+            [IO.File]::WriteAllBytes("attestation/PRIMARY-KEY-003.priv", $privBytes)
+            Write-Host "✅ clé privée écrite (attestation/PRIMARY-KEY-003.priv)"
+          } else {
+            Write-Warning "⚠️ HUMEAN_PRIVKEY_B64 manquant - la signature risque d'échouer."
+          }
+
+          if ($env:HUMEAN_PUBKEY_B64) {
+            $pubBytes = [Convert]::FromBase64String($env:HUMEAN_PUBKEY_B64)
+            [IO.File]::WriteAllBytes("attestation/PRIMARY-KEY-003.pub", $pubBytes)
+            Write-Host "✅ clé publique écrite (attestation/PRIMARY-KEY-003.pub)"
+          } else {
+            Write-Warning "⚠️ HUMEAN_PUBKEY_B64 manquant - la vérification utilisera la clé du repo si présente."
+          }
+        env:
+          HUMEAN_PRIVKEY_B64: ${{ secrets.HUMEAN_PRIVKEY_B64 }}
+          HUMEAN_PUBKEY_B64:  ${{ secrets.HUMEAN_PUBKEY_B64 }}
+
+      - name: Sign charter / ledger
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "scripts/sign_charter.ps1")) {
+            Write-Error "scripts/sign_charter.ps1 introuvable. Ajoute-le dans le repo."
+          }
+
+          # ⚠️ adapte le nom du charter si c'est pas charter_v1_3.json
+          pwsh ./scripts/sign_charter.ps1 `
+            -CharterPath "charter_v1_3.json" `
+            -PrivKeyPath "attestation/PRIMARY-KEY-003.priv" `
+            -OutLedger "log/ledger_signed.jsonl"
+
+      - name: Commit & push updated ledger
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name  "humean-ci"
+          git config user.email "humean-ci@users.noreply.github.com"
+
+          $status = git status --porcelain
+          if (-not [string]::IsNullOrWhiteSpace($status)) {
+            Write-Host "🟡 changements détectés, on commit..."
+            git add log/ attestation/ charter_v1_3.json 2>$null
+            git commit -m "ci: auto sign ledger"
+            git push origin HEAD:main
+            Write-Host "✅ changements poussés"
+          } else {
+            Write-Host "✅ aucun changement à pousser"
+          }
+
+      - name: Verify ledger
+        shell: pwsh
+        run: ./ci/verify-ledger-ci.ps1
