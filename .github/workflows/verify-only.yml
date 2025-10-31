@@ -1,0 +1,36 @@
+﻿name: verify-only
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-only:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Verify ledger (strict)
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "./ci/verify-ledger-ci.ps1")) {
+            Write-Error "ci/verify-ledger-ci.ps1 manquant → la PR n'est pas conforme."
+            exit 1
+          }
+
+          pwsh ./ci/verify-ledger-ci.ps1
+
+          if (-not (Test-Path "log/ledger_signed.jsonl") -and -not (Test-Path "log/ledger.jsonl")) {
+            Write-Error "Aucun ledger trouvé dans la PR (log/ledger_signed.jsonl ni log/ledger.jsonl)."
+            exit 1
+          }
+
+          Write-Host "✅ Vérification PR OK"
