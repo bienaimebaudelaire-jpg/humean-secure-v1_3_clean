@@ -4,3 +4,7 @@ event: genesis
 author: bienaimebaudelaire-jpg
 policy: policies/policy.jcs.json
 charter: charters/charter_v1_1.json
+timestamp: 2025-10-31T22:48:12+01:00
+event: key_rotation
+old_pub: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINrjaLewPyTx4XJM4SF1WgsbX6HsaBb8ulnpDXzV35p0 humean-key
+new_pub: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPPofSqbQENPJuyIQSNxl+0V/WGvQoFsJW9oxYF2aXhE humean-key

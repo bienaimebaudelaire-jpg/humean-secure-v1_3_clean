@@ -1,2 +1,6 @@
-﻿Param([string]$LedgerPath="attestation/ledger.log",[string]$SigPath="attestation/ledger.sshsig",[string]$PubKeyPath="attestation/keys/pub_ed25519.openssh")
-Get-Content $LedgerPath | ssh-keygen -Y verify -f $PubKeyPath -I "humean" -n file -s $SigPath
+Param(
+  [string]$LedgerPath = "attestation/ledger.log",
+  [string]$SigPath    = "attestation/ledger.sshsig",
+  [string]$Signers    = "attestation/keys/allowed_signers"
+)
+Get-Content $LedgerPath | ssh-keygen -Y verify -f $Signers -I "humean" -n file -s $SigPath
