@@ -28,7 +28,7 @@ if (Test-Path $merklePath) {
 } else {
     Write-Warning "⚠️ Pas de Merkle root trouvée, on va essayer de la générer à la volée..."
     if (Test-Path "ci/build-merkle-ledger.ps1") {
-        pwsh ./ci/build-merkle-ledger.ps1
+        powershell -ExecutionPolicy Bypass -File "./ci/build-merkle-ledger.ps1"
         if (Test-Path $merklePath) {
             $merkleObj = Get-Content $merklePath -Raw | ConvertFrom-Json
         }
