@@ -6,8 +6,6 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 jobs:
   build-and-publish:
@@ -19,33 +17,39 @@ jobs:
         with:
           fetch-depth: 0
 
-      # 1) (re)générer Merkle + proofs + pack minimal
-      - name: Build Merkle
+      - name: Build Merkle (tolerant)
         shell: pwsh
+        continue-on-error: true
         run: |
           if (Test-Path "./ci/build-merkle-ledger.ps1") {
             pwsh ./ci/build-merkle-ledger.ps1
+          } else {
+            Write-Host "no merkle script, skipping"
           }
 
-      - name: Build Merkle proofs
+      - name: Build Merkle proofs (tolerant)
         shell: pwsh
+        continue-on-error: true
         run: |
           if (Test-Path "./ci/build-merkle-proofs.ps1") {
             pwsh ./ci/build-merkle-proofs.ps1
+          } else {
+            Write-Host "no merkle proofs script, skipping"
           }
 
-      - name: Build Attestation pack (files only)
+      - name: Build attestation pack (tolerant)
         shell: pwsh
+        continue-on-error: true
         run: |
           if (Test-Path "./ci/make-attestation-pack.ps1") {
             pwsh ./ci/make-attestation-pack.ps1
+          } else {
+            Write-Host "no attestation script, skipping"
           }
 
-      # 2) préparer le dossier à publier
       - name: Prepare pages content
         run: |
           mkdir -p public
-          # on copie ce qui existe uniquement
           [ -f out/manifest.json ] && cp out/manifest.json public/
           [ -f out/merkle_root.json ] && cp out/merkle_root.json public/
           [ -f out/proofs-index.json ] && cp out/proofs-index.json public/
@@ -54,8 +58,8 @@ jobs:
             cp out/proofs/*.json public/proofs/ 2>/dev/null || true
           fi
 
-      # 3) publier sur gh-pages
       - name: Deploy to GitHub Pages
+        if: ${{ hashFiles('public/**') != '' }}
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

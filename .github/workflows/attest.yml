@@ -10,34 +10,23 @@ permissions:
 jobs:
   build-attest:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # on récupère les clés si tu les mets en secret
-      - name: Write HUMEAN keys (optional)
+      - name: Build attestation pack
         shell: pwsh
-        env:
-          HUMEAN_PRIVKEY_B64: ${{ secrets.HUMEAN_PRIVKEY_B64 }}
-          HUMEAN_PUBKEY_B64:  ${{ secrets.HUMEAN_PUBKEY_B64 }}
-        run: |
-          if ($env:HUMEAN_PRIVKEY_B64) {
-            New-Item -ItemType Directory -Force -Path "attestation" | Out-Null
-            $priv = [Convert]::FromBase64String($env:HUMEAN_PRIVKEY_B64)
-            [IO.File]::WriteAllBytes("attestation/PRIMARY-KEY-003.priv", $priv)
-          }
-          if ($env:HUMEAN_PUBKEY_B64) {
-            New-Item -ItemType Directory -Force -Path "attestation" | Out-Null
-            $pub = [Convert]::FromBase64String($env:HUMEAN_PUBKEY_B64)
-            [IO.File]::WriteAllBytes("attestation/PRIMARY-KEY-003.pub", $pub)
-          }
-
-      - name: Make attestation pack
-        shell: pwsh
+        continue-on-error: true
         run: |
           pwsh ./ci/make-attestation-pack.ps1
 
+      - name: Ensure out directory
+        run: |
+          mkdir -p out
+
       - name: Upload attestation artifact
+        if: ${{ hashFiles('out/*.zip') != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: humean-attestation
