@@ -1,0 +1,28 @@
+﻿name: merkle-proofs
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  proofs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Merkle proofs
+        shell: pwsh
+        run: |
+          pwsh ./ci/build-merkle-proofs.ps1
+
+      - name: Upload proofs
+        uses: actions/upload-artifact@v4
+        with:
+          name: humean-merkle-proofs
+          path: |
+            out/proofs-index.json
+            out/proofs/*.json
