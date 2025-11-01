@@ -1,0 +1,28 @@
+﻿name: merkle-ledger
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  merkle:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Merkle from ledger
+        shell: pwsh
+        run: |
+          pwsh ./ci/build-merkle-ledger.ps1
+
+      - name: Upload Merkle root
+        if: ${{ hashFiles('out/merkle_root.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+            name: humean-merkle-root
+            path: out/merkle_root.json
